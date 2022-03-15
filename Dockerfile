@@ -1,0 +1,31 @@
+FROM debian:unstable
+
+ENV DEBIAN_FRONTEND noninteractive
+RUN sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
+RUN echo "deb-src http://deb.debian.org/debian unstable main contrib non-free" >> /etc/apt/sources.list
+RUN apt-get -y update
+RUN apt-get -y install build-essential bear
+RUN useradd -ms /bin/bash builder
+RUN apt-get -y install sudo
+RUN adduser builder sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+COPY builddep.txt /tmp/
+# RUN cat /tmp/builddep.txt | xargs apt-get -y install
+RUN apt-get -y install strace python3 python3-debian wget devscripts lsb-release software-properties-common
+RUN mkdir /scripts
+COPY llvm.sh /scripts
+RUN bash /scripts/llvm.sh 14
+RUN apt-get -y install zstd
+COPY build.sh /scripts/
+COPY build_latest.sh /scripts/
+COPY build_nobear.sh /scripts/
+COPY build_debug.sh /scripts/
+COPY gen_asm.py /scripts
+COPY list_srcgz.py /scripts
+RUN chmod +x /scripts/*
+# So we can preserve the debs used in the build process
+RUN rm -f /etc/apt/apt.conf.d/docker-clean
+USER builder
+WORKDIR /home/builder
+
+ENTRYPOINT ["/scripts/build.sh"]
