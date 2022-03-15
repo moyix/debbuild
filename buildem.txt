@@ -1,0 +1,2 @@
+cat remain.txt | parallel -j 16 --progress docker run --rm -v /fastdata:/fastdata debbuild {} '&>' /fastdata/buildlogs/{./}.log
+docker run --rm -it --entrypoint bash -v /data:/data -v /fastdata:/fastdata -v /fastdata/debian_allsrc/build/coreutils:/build --mount type=tmpfs,destination=/build
